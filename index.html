@@ -1,0 +1,422 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#fff0f4">
+<title>Our Little Wallet ♡</title>
+<style>
+:root{--pink:#e97998;--rose:#c95779;--soft:#fff0f4;--ink:#553b45;--muted:#997c86;--line:#f5dce4;--green:#558d72}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(145deg,#fff5f7,#fffaf4 55%,#fdf0f5);font-family:ui-rounded,"Trebuchet MS",system-ui,sans-serif;color:var(--ink);min-height:100vh}
+.wrap{max-width:980px;margin:auto;padding:18px 14px 42px}
+.hero{text-align:center;padding:14px 8px}
+.heart{font-size:32px}
+h1{font-size:clamp(28px,5vw,42px);margin:4px 0;color:#bd5477;letter-spacing:-1px}
+.sub{color:var(--muted);font-size:14px;margin:0}
+.date-line{margin-top:10px;color:#b36d84;font-size:12px}
+.panel,.card{background:#ffffffdf;border:1px solid var(--line);border-radius:21px;padding:17px;box-shadow:0 8px 25px #d58ca51a}
+.panel h2{font-size:18px;margin:0 0 13px;color:#a94d6d}
+.setup{margin:10px 0 15px}
+.status{font-size:12px;color:var(--muted);padding:10px 12px;border-radius:12px;background:#fff4f7;margin:10px 0}
+.status.ok{color:#39765a;background:#edf8f1}
+.status.bad{color:#a94764;background:#fff0f4}
+.field{margin:10px 0}
+.field label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px 3px}
+.field input,.field select{width:100%;border:1px solid #f0d4de;border-radius:13px;padding:12px;background:#fffafb;color:var(--ink);font:inherit;outline:none;min-width:0}
+.field input:focus,.field select:focus{border-color:var(--pink)}
+.btn{border:0;border-radius:13px;padding:12px 14px;background:linear-gradient(135deg,#e97998,#cb5c7f);color:white;font:inherit;font-weight:800;cursor:pointer}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.secondary{background:#fff0f4;color:#b45172;border:1px solid #f4d5df;box-shadow:none}
+.btn.full{width:100%;margin-top:5px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row>*{flex:1}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:13px 0}
+.card{padding:13px}
+.stat-label{font-size:11px;color:var(--muted);margin-bottom:6px}
+.stat{font-size:clamp(16px,3vw,23px);font-weight:800;overflow-wrap:anywhere}
+.in{color:var(--green)}
+.out{color:var(--rose)}
+.layout{display:grid;grid-template-columns:.9fr 1.1fr;gap:13px}
+.tiny{font-size:11px;color:#ad929b;line-height:1.55;margin:10px 2px}
+.filterrow{display:flex;gap:8px;margin-bottom:12px}
+.filterrow select{flex:1;min-width:0;border:1px solid var(--line);border-radius:12px;padding:10px;background:#fffafb;color:var(--ink);font:inherit}
+.transactions{display:flex;flex-direction:column;gap:8px;max-height:480px;overflow:auto}
+.tx{display:flex;align-items:center;gap:9px;padding:11px;border:1px solid #f7e5eb;border-radius:15px;background:#fffdfd}
+.emoji{width:38px;height:38px;display:grid;place-items:center;background:#fff0f4;border-radius:13px;font-size:20px;flex-shrink:0}
+.txinfo{flex:1;min-width:0}
+.txname{font-weight:750;font-size:14px;overflow-wrap:anywhere}
+.txmeta{font-size:10px;color:var(--muted);margin-top:4px}
+.txamount{font-weight:800;text-align:right;white-space:nowrap;font-size:12px}
+.delete{border:0;background:transparent;color:#caa0ad;font-size:18px;cursor:pointer;padding:4px}
+.empty{text-align:center;padding:28px 10px;color:#b797a2;font-size:13px}
+.empty span{display:block;font-size:30px;margin-bottom:8px}
+.tools{display:flex;gap:8px;margin-top:11px}
+.tools button{flex:1;font-size:12px}
+.roomcode{font-weight:800;letter-spacing:1px;overflow-wrap:anywhere;color:#b45172}
+.bottom{text-align:center;margin-top:18px;font-size:12px;color:#bd8799}
+.hidden{display:none!important}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#633d4d;color:white;border-radius:20px;padding:11px 17px;font-size:13px;display:none;z-index:5;max-width:90%;text-align:center}
+@media(max-width:680px){.layout{grid-template-columns:1fr}.transactions{max-height:unset}.panel{padding:14px}.cards{gap:7px}.card{border-radius:16px;padding:11px}.row{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+<div class="heart">♡</div>
+<h1>Our Little Wallet</h1>
+<p class="sub">Catatan kecil untuk mimpi besar kita berdua ✿</p>
+<div class="date-line" id="today"></div>
+</header>
+
+<section class="panel setup">
+<h2>Ruang keuangan berdua ♡</h2>
+<div id="setupStatus" class="status">Menghubungkan ke Firebase...</div>
+<div id="connectArea">
+<div class="field">
+<label for="roomInput">Kode ruang dari pasangan</label>
+<input id="roomInput" placeholder="Masukkan kode ruang untuk bergabung" autocomplete="off">
+</div>
+<div class="row">
+<button class="btn" id="createRoom">Buat ruang baru</button>
+<button class="btn secondary" id="joinRoom">Gabung ruang</button>
+</div>
+<p class="tiny">Satu orang membuat ruang lalu membagikan kodenya kepada pasangan. Jangan bagikan kode ruang kepada orang lain.</p>
+</div>
+<div id="activeRoom" class="hidden">
+<div class="status ok">Tersambung ke ruang bersama ♡</div>
+<div>Kode ruang: <span class="roomcode" id="roomCode"></span></div>
+<div class="tools">
+<button class="btn secondary" id="copyRoom">Salin kode</button>
+<button class="btn secondary" id="leaveRoom">Keluar ruang</button>
+</div>
+</div>
+</section>
+
+<section class="cards">
+<div class="card"><div class="stat-label">♡ Uang masuk</div><div class="stat in" id="totalIn">Rp0</div></div>
+<div class="card"><div class="stat-label">♡ Uang keluar</div><div class="stat out" id="totalOut">Rp0</div></div>
+<div class="card"><div class="stat-label">♡ Sisa uang</div><div class="stat" id="balance">Rp0</div></div>
+</section>
+
+<div class="layout">
+<section class="panel">
+<h2>Tambah catatan ♡</h2>
+<form id="expenseForm">
+<div class="field">
+<label for="kind">Jenis catatan</label>
+<select id="kind"><option value="out">Pengeluaran</option><option value="in">Pemasukan</option></select>
+</div>
+<div class="field">
+<label for="name">Untuk apa, sayang?</label>
+<input id="name" maxlength="80" placeholder="Contoh: makan berdua 🍜" required>
+</div>
+<div class="row">
+<div class="field">
+<label for="amount">Jumlah (Rp)</label>
+<input id="amount" type="number" min="1" step="1" placeholder="25000" required>
+</div>
+<div class="field">
+<label for="who">Dari siapa?</label>
+<select id="who"><option value="Bersama">Kita berdua</option><option value="Aku">Aku</option><option value="Kamu">Kamu</option></select>
+</div>
+</div>
+<div class="row">
+<div class="field">
+<label for="category">Kategori</label>
+<select id="category">
+<option>Makan &amp; minum</option><option>Jalan-jalan</option><option>Transportasi</option><option>Kado</option><option>Tabungan bersama</option><option>Tagihan</option><option>Lainnya</option><option>Gaji / pemasukan</option>
+</select>
+</div>
+<div class="field">
+<label for="date">Tanggal</label>
+<input id="date" type="date" required>
+</div>
+</div>
+<button class="btn full" id="saveBtn" type="submit" disabled>Simpan catatan ♡</button>
+</form>
+<p class="tiny">Catatan dapat disimpan setelah ruang tersambung. Perubahan akan disinkronkan melalui internet.</p>
+</section>
+
+<section class="panel">
+<h2>Jejak cerita kita ✿</h2>
+<div class="filterrow">
+<select id="monthFilter"><option value="all">Semua bulan</option></select>
+<select id="typeFilter"><option value="all">Semua catatan</option><option value="out">Pengeluaran</option><option value="in">Pemasukan</option></select>
+</div>
+<div id="transactions" class="transactions"><div class="empty"><span>🌸</span>Hubungkan ke ruang bersama untuk melihat catatan.</div></div>
+<p class="tiny">Catatan yang dihapus akan masuk ke riwayat sampah.</p>
+<h2 style="margin-top:15px">Riwayat yang dihapus 🗑️</h2>
+<div id="trash" class="transactions"><div class="empty">Belum ada catatan terhapus.</div></div>
+</section>
+</div>
+<div class="bottom">Dibuat dengan banyak ♡ untuk masa depan kalian berdua.</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* Konfigurasi proyek Firebase */
+const firebaseConfig = {
+  apiKey: "AIzaSyCUed7WAIcmU3LD44xtisUSP-XA14XSz_U",
+  authDomain: "our-wallet-project.firebaseapp.com",
+  databaseURL: "https://our-wallet-project-default-rtdb.firebaseio.com",
+  projectId: "our-wallet-project",
+  storageBucket: "our-wallet-project.firebasestorage.app",
+  messagingSenderId: "439095264287",
+  appId: "1:439095264287:web:8daf72eabc5a6e81a2012a",
+  measurementId: "G-W2S5MWHXB2"
+};
+
+const $ = id => document.getElementById(id);
+const localDate = d => {
+  const x = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+  return x.toISOString().slice(0,10);
+};
+const today = new Date();
+$('today').textContent = today.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+$('date').value = localDate(today);
+const rupiah = n => new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(n||0);
+
+let app, auth, db, user=null, roomId=null, unsubscribe=null, entries=[], trash=[];
+
+function toast(msg) {
+  const t=$('toast');
+  t.textContent=msg;
+  t.style.display='block';
+  setTimeout(()=>t.style.display='none',2600);
+}
+function setStatus(msg,kind='') {
+  const el=$('setupStatus');
+  el.textContent=msg;
+  el.className='status '+kind;
+}
+function makeRoomCode() {
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let s='';
+  const a=new Uint8Array(20);
+  crypto.getRandomValues(a);
+  for(const n of a)s+=chars[n%chars.length];
+  return s;
+}
+function esc(s) {
+  return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function icon(category) {
+  return ({'Makan & minum':'🍰','Jalan-jalan':'🌷','Transportasi':'🛵','Kado':'🎁','Tabungan bersama':'🐷','Tagihan':'🧾','Lainnya':'💗','Gaji / pemasukan':'💌'})[category]||'💗';
+}
+function render() {
+  const month=$('monthFilter').value,type=$('typeFilter').value;
+  const monthEntries=entries.filter(e=>month==='all'||e.date.startsWith(month));
+  const totals=monthEntries.reduce((a,e)=>{a[e.kind]+=Number(e.amount);return a},{in:0,out:0});
+  $('totalIn').textContent=rupiah(totals.in);
+  $('totalOut').textContent=rupiah(totals.out);
+  $('balance').textContent=rupiah(totals.in-totals.out);
+
+  const visible=monthEntries.filter(e=>type==='all'||e.kind===type).sort((a,b)=>b.date.localeCompare(a.date)||(b.created||0)-(a.created||0));
+  $('transactions').innerHTML=visible.length?visible.map(e=>`
+    <div class="tx">
+      <div class="emoji">${icon(e.category)}</div>
+      <div class="txinfo">
+        <div class="txname">${esc(e.name)}</div>
+        <div class="txmeta">${esc(e.category)} · ${esc(e.who)} · ${new Date(e.date+'T12:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</div>
+      </div>
+      <div class="txamount ${e.kind==='in'?'in':'out'}">${e.kind==='in'?'+':'−'}${rupiah(e.amount)}</div>
+      <button class="delete" data-delete="${e.id}" title="Pindah ke sampah">×</button>
+    </div>`).join(''):'<div class="empty"><span>🌸</span>Belum ada catatan di sini.</div>';
+
+  $('trash').innerHTML=trash.length?trash.slice().sort((a,b)=>(b.deletedAt||0)-(a.deletedAt||0)).map(e=>`
+    <div class="tx">
+      <div class="emoji">🗑️</div>
+      <div class="txinfo">
+        <div class="txname">${esc(e.name)}</div>
+        <div class="txmeta">${rupiah(e.amount)} · dihapus ${new Date(e.deletedAt||Date.now()).toLocaleString('id-ID')}</div>
+      </div>
+      <button class="btn secondary" data-restore="${e.id}" style="padding:7px 9px;font-size:11px">Pulihkan</button>
+    </div>`).join(''):'<div class="empty">Belum ada catatan terhapus.</div>';
+
+  const months=[...new Set([localDate(today).slice(0,7),...entries.map(e=>e.date.slice(0,7))])].sort().reverse();
+  const old=$('monthFilter').value;
+  $('monthFilter').innerHTML='<option value="all">Semua bulan</option>'+months.map(m=>`<option value="${m}">${new Date(m+'-02').toLocaleDateString('id-ID',{month:'long',year:'numeric'})}</option>`).join('');
+  if(months.includes(old))$('monthFilter').value=old;
+}
+
+async function writeRoom(nextEntries,nextTrash) {
+  if(!roomId||!user)throw new Error('Belum tersambung ke ruang');
+  await setDoc(doc(db,'rooms',roomId),{entries:nextEntries,trash:nextTrash,updatedAt:serverTimestamp()});
+}
+
+async function connectRoom(code,create=false) {
+  if(!db||!user){toast('Firebase belum siap. Periksa konfigurasi.');return}
+  code=code.trim().toUpperCase();
+  if(!create&&!/^[A-HJ-NP-Z2-9]{20}$/.test(code)){toast('Kode ruang harus 20 karakter.');return}
+  if(create)code=makeRoomCode();
+
+  try {
+    const ref=doc(db,'rooms',code);
+    const snap=await getDoc(ref);
+    if(create) {
+      if(snap.exists()){toast('Coba buat ruang lagi.');return}
+      await setDoc(ref,{entries:[],trash:[],createdAt:serverTimestamp()});
+    } else if(!snap.exists()) {
+      toast('Kode ruang tidak ditemukan. Periksa kode ya.');
+      return;
+    }
+
+    if(unsubscribe)unsubscribe();
+    roomId=code;
+    localStorage.setItem('olw_room',code);
+    $('connectArea').classList.add('hidden');
+    $('activeRoom').classList.remove('hidden');
+    $('roomCode').textContent=code;
+    $('saveBtn').disabled=false;
+    setStatus('Online: catatan akan tersinkron ke perangkat yang terhubung.','ok');
+
+    unsubscribe=onSnapshot(ref,s=>{
+      if(!s.exists())return;
+      const data=s.data();
+      entries=Array.isArray(data.entries)?data.entries:[];
+      trash=Array.isArray(data.trash)?data.trash:[];
+      render();
+    },err=>{
+      console.error(err);
+      setStatus('Gagal membaca data. Periksa aturan Firestore dan koneksi.','bad');
+    });
+  } catch(err) {
+    console.error(err);
+    toast('Tidak bisa membuka ruang. Periksa konfigurasi Firebase dan aturan database.');
+  }
+}
+
+$('createRoom').onclick=()=>connectRoom('',true);
+$('joinRoom').onclick=()=>connectRoom($('roomInput').value,false);
+
+$('copyRoom').onclick=async()=>{
+  try {
+    await navigator.clipboard.writeText(roomId);
+    toast('Kode ruang tersalin ♡');
+  } catch {
+    toast('Salin kode ini secara manual: '+roomId);
+  }
+};
+
+$('leaveRoom').onclick=()=>{
+  if(unsubscribe)unsubscribe();
+  unsubscribe=null;
+  roomId=null;
+  entries=[];
+  trash=[];
+  localStorage.removeItem('olw_room');
+  $('activeRoom').classList.add('hidden');
+  $('connectArea').classList.remove('hidden');
+  $('saveBtn').disabled=true;
+  render();
+  setStatus('Kamu keluar dari ruang ini. Data online tidak dihapus.');
+};
+
+$('expenseForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  if(!roomId)return toast('Hubungkan ruang bersama dahulu.');
+
+  const amount=Number($('amount').value);
+  const name=$('name').value.trim();
+  if(!name||!Number.isFinite(amount)||amount<=0)return toast('Periksa nama dan jumlah ya ♡');
+
+  const next=[...entries,{
+    id:crypto.randomUUID(),
+    kind:$('kind').value,
+    name,
+    amount,
+    who:$('who').value,
+    category:$('category').value,
+    date:$('date').value,
+    created:Date.now(),
+    createdBy:user.uid
+  }];
+
+  $('saveBtn').disabled=true;
+  try {
+    await writeRoom(next,trash);
+    $('name').value='';
+    $('amount').value='';
+    toast('Catatan tersimpan ♡');
+  } catch(err) {
+    console.error(err);
+    toast('Gagal menyimpan. Periksa koneksi dan aturan database.');
+  } finally {
+    $('saveBtn').disabled=false;
+  }
+});
+
+$('transactions').addEventListener('click',async e=>{
+  const b=e.target.closest('[data-delete]');
+  if(!b||!roomId)return;
+  const item=entries.find(x=>x.id===b.dataset.delete);
+  if(!item||!confirm('Pindahkan catatan ini ke riwayat sampah?'))return;
+
+  try {
+    await writeRoom(
+      entries.filter(x=>x.id!==item.id),
+      [...trash,{...item,deletedAt:Date.now(),deletedBy:user.uid}]
+    );
+    toast('Dipindahkan ke sampah ♡');
+  } catch(err) {
+    console.error(err);
+    toast('Gagal menghapus catatan');
+  }
+});
+
+$('trash').addEventListener('click',async e=>{
+  const b=e.target.closest('[data-restore]');
+  if(!b||!roomId)return;
+  const item=trash.find(x=>x.id===b.dataset.restore);
+  if(!item)return;
+
+  try {
+    const restored={...item};
+    delete restored.deletedAt;
+    delete restored.deletedBy;
+    await writeRoom(
+      [...entries,restored],
+      trash.filter(x=>x.id!==item.id)
+    );
+    toast('Catatan dipulihkan ♡');
+  } catch(err) {
+    console.error(err);
+    toast('Gagal memulihkan catatan');
+  }
+});
+
+$('monthFilter').onchange=render;
+$('typeFilter').onchange=render;
+
+try {
+  app=initializeApp(firebaseConfig);
+  auth=getAuth(app);
+  db=getFirestore(app);
+
+  onAuthStateChanged(auth,u=>{
+    user=u;
+    if(u) {
+      setStatus('Terhubung ke layanan. Buat ruang atau masukkan kode pasangan.','ok');
+      const saved=localStorage.getItem('olw_room');
+      if(saved)connectRoom(saved,false);
+    }
+  });
+
+  signInAnonymously(auth).catch(err=>{
+    console.error(err);
+    setStatus('Login anonim gagal. Aktifkan Anonymous di Firebase Authentication.','bad');
+  });
+} catch(err) {
+  console.error(err);
+  setStatus('Gagal memulai Firebase. Periksa konfigurasi proyek.','bad');
+  $('saveBtn').disabled=true;
+}
+</script>
+</body>
+</html>
